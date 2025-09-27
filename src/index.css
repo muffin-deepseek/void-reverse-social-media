@@ -67,7 +67,7 @@
   font-family: 'Orbitron', 'Courier Prime', monospace !important;
 }
 
-/* Grid Background with CRT Effects */
+/* CRT Scanlines Effect */
 .crt-scanlines::before {
   content: '';
   position: fixed;
@@ -75,63 +75,20 @@
   left: 0;
   width: 100%;
   height: 100%;
-  background: 
-    /* Subtle scanlines */
-    repeating-linear-gradient(
-      transparent,
-      transparent var(--scanline-height),
-      hsla(var(--neon-primary), 0.02) var(--scanline-height),
-      hsla(var(--neon-primary), 0.02) calc(var(--scanline-height) * 2)
-    ),
-    /* Grid pattern */
-    linear-gradient(90deg, transparent 0%, transparent 49%, hsla(var(--neon-dim), 0.15) 50%, hsla(var(--neon-dim), 0.15) 51%, transparent 52%, transparent 100%),
-    linear-gradient(0deg, transparent 0%, transparent 49%, hsla(var(--neon-dim), 0.15) 50%, hsla(var(--neon-dim), 0.15) 51%, transparent 52%, transparent 100%);
-  background-size: 
-    100% 4px,
-    40px 40px,
-    40px 40px;
+  background: repeating-linear-gradient(
+    transparent,
+    transparent var(--scanline-height),
+    hsla(var(--neon-primary), 0.03) var(--scanline-height),
+    hsla(var(--neon-primary), 0.03) calc(var(--scanline-height) * 2)
+  );
   pointer-events: none;
   z-index: 1000;
-  animation: scanlines 0.1s linear infinite, grid-flicker 3s ease-in-out infinite;
+  animation: scanlines 0.1s linear infinite;
 }
 
 @keyframes scanlines {
   0% { transform: translateY(0); }
   100% { transform: translateY(4px); }
-}
-
-@keyframes grid-flicker {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.8; }
-}
-
-/* Enhanced Hover Effects */
-.post-hover {
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.post-hover:hover {
-  transform: translateY(-4px) scale(1.02);
-  box-shadow: 
-    0 0 20px hsla(var(--neon-glow), 0.3),
-    0 10px 40px hsla(var(--terminal-border), 0.4);
-  border-color: hsl(var(--neon-bright));
-}
-
-.button-glow {
-  transition: all 0.2s ease-in-out;
-  position: relative;
-}
-
-.button-glow:hover {
-  transform: scale(1.05);
-  box-shadow: 
-    0 0 15px hsla(var(--neon-glow), 0.6),
-    0 0 30px hsla(var(--neon-glow), 0.3);
-}
-
-.button-glow:active {
-  transform: scale(0.98);
 }
 
 /* Neon Glow Effects */
