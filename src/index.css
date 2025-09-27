@@ -2,96 +2,201 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Definition of the design system. All colors, gradients, fonts, etc should be defined here. 
-All colors MUST be HSL.
-*/
+/* Void - Hacker Terminal Design System */
+@import url('https://fonts.googleapis.com/css2?family=Courier+Prime:wght@400;700&family=Orbitron:wght@400;700;900&display=swap');
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 222.2 84% 4.9%;
-
-    --card: 0 0% 100%;
-    --card-foreground: 222.2 84% 4.9%;
-
-    --popover: 0 0% 100%;
-    --popover-foreground: 222.2 84% 4.9%;
-
-    --primary: 222.2 47.4% 11.2%;
-    --primary-foreground: 210 40% 98%;
-
-    --secondary: 210 40% 96.1%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
-
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
-
-    --accent: 210 40% 96.1%;
-    --accent-foreground: 222.2 47.4% 11.2%;
-
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 40% 98%;
-
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 222.2 84% 4.9%;
-
-    --radius: 0.5rem;
-
-    --sidebar-background: 0 0% 98%;
-
-    --sidebar-foreground: 240 5.3% 26.1%;
-
-    --sidebar-primary: 240 5.9% 10%;
-
-    --sidebar-primary-foreground: 0 0% 98%;
-
-    --sidebar-accent: 240 4.8% 95.9%;
-
-    --sidebar-accent-foreground: 240 5.9% 10%;
-
-    --sidebar-border: 220 13% 91%;
-
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    /* Core Terminal Colors */
+    --terminal-bg: 0 0% 16%; /* #2A2A2A */
+    --terminal-surface: 0 0% 12%; /* Darker concrete */
+    --terminal-border: 120 100% 25%; /* Dark neon green */
+    
+    /* Neon Green Variants */
+    --neon-primary: 120 100% 50%; /* #39FF14 */
+    --neon-bright: 120 100% 60%; /* Brighter neon */
+    --neon-dim: 120 100% 35%; /* Dimmer neon */
+    --neon-glow: 120 100% 50%; /* For glow effects */
+    
+    /* Text Colors */
+    --text-neon: 120 100% 50%; /* Main neon green text */
+    --text-dim: 120 60% 70%; /* Dimmed green */
+    --text-muted: 0 0% 60%; /* Gray text */
+    --text-white: 0 0% 95%; /* Near white */
+    
+    /* Semantic Mappings */
+    --background: var(--terminal-bg);
+    --foreground: var(--text-neon);
+    
+    --card: var(--terminal-surface);
+    --card-foreground: var(--text-neon);
+    
+    --primary: var(--neon-primary);
+    --primary-foreground: var(--terminal-bg);
+    
+    --secondary: var(--terminal-surface);
+    --secondary-foreground: var(--text-neon);
+    
+    --muted: var(--terminal-surface);
+    --muted-foreground: var(--text-dim);
+    
+    --accent: var(--neon-dim);
+    --accent-foreground: var(--text-white);
+    
+    --destructive: 0 100% 50%; /* Red for deletion */
+    --destructive-foreground: var(--text-white);
+    
+    --border: var(--terminal-border);
+    --input: var(--terminal-surface);
+    --ring: var(--neon-glow);
+    
+    --radius: 0rem; /* Sharp terminal edges */
+    
+    /* Custom Properties */
+    --scanline-height: 2px;
+    --glitch-intensity: 2px;
   }
+}
 
-  .dark {
-    --background: 222.2 84% 4.9%;
-    --foreground: 210 40% 98%;
+/* Terminal Font Stack */
+* {
+  font-family: 'Courier Prime', 'Courier New', monospace !important;
+}
 
-    --card: 222.2 84% 4.9%;
-    --card-foreground: 210 40% 98%;
+.font-orbitron {
+  font-family: 'Orbitron', 'Courier Prime', monospace !important;
+}
 
-    --popover: 222.2 84% 4.9%;
-    --popover-foreground: 210 40% 98%;
+/* CRT Scanlines Effect */
+.crt-scanlines::before {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: repeating-linear-gradient(
+    transparent,
+    transparent var(--scanline-height),
+    hsla(var(--neon-primary), 0.03) var(--scanline-height),
+    hsla(var(--neon-primary), 0.03) calc(var(--scanline-height) * 2)
+  );
+  pointer-events: none;
+  z-index: 1000;
+  animation: scanlines 0.1s linear infinite;
+}
 
-    --primary: 210 40% 98%;
-    --primary-foreground: 222.2 47.4% 11.2%;
+@keyframes scanlines {
+  0% { transform: translateY(0); }
+  100% { transform: translateY(4px); }
+}
 
-    --secondary: 217.2 32.6% 17.5%;
-    --secondary-foreground: 210 40% 98%;
+/* Neon Glow Effects */
+.neon-glow {
+  text-shadow: 
+    0 0 5px hsl(var(--neon-glow)),
+    0 0 10px hsl(var(--neon-glow)),
+    0 0 15px hsl(var(--neon-glow)),
+    0 0 20px hsl(var(--neon-glow));
+}
 
-    --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
+.neon-border {
+  border: 1px solid hsl(var(--neon-primary));
+  box-shadow: 
+    0 0 5px hsl(var(--neon-glow)),
+    inset 0 0 5px hsl(var(--neon-glow));
+}
 
-    --accent: 217.2 32.6% 17.5%;
-    --accent-foreground: 210 40% 98%;
+/* Glitch Effects */
+.glitch {
+  position: relative;
+  animation: glitch-shake 0.3s ease-in-out infinite alternate;
+}
 
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 40% 98%;
+.glitch::before,
+.glitch::after {
+  content: attr(data-text);
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+}
 
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
-    --ring: 212.7 26.8% 83.9%;
-    --sidebar-background: 240 5.9% 10%;
-    --sidebar-foreground: 240 4.8% 95.9%;
-    --sidebar-primary: 224.3 76.3% 48%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 240 3.7% 15.9%;
-    --sidebar-accent-foreground: 240 4.8% 95.9%;
-    --sidebar-border: 240 3.7% 15.9%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
+.glitch::before {
+  animation: glitch-1 0.3s ease-in-out infinite alternate;
+  color: #ff0040;
+  z-index: -1;
+}
+
+.glitch::after {
+  animation: glitch-2 0.3s ease-in-out infinite alternate;
+  color: #00ffff;
+  z-index: -2;
+}
+
+@keyframes glitch-shake {
+  0% { transform: skew(0deg); }
+  10% { transform: skew(-2deg); }
+  20% { transform: skew(1deg); }
+  30% { transform: skew(-1deg); }
+  40% { transform: skew(2deg); }
+  50% { transform: skew(0deg); }
+  60% { transform: skew(-1deg); }
+  70% { transform: skew(1deg); }
+  80% { transform: skew(-2deg); }
+  90% { transform: skew(2deg); }
+  100% { transform: skew(0deg); }
+}
+
+@keyframes glitch-1 {
+  0% { clip-path: inset(40% 0 61% 0); }
+  20% { clip-path: inset(92% 0 1% 0); }
+  40% { clip-path: inset(43% 0 1% 0); }
+  60% { clip-path: inset(25% 0 58% 0); }
+  80% { clip-path: inset(54% 0 7% 0); }
+  100% { clip-path: inset(58% 0 43% 0); }
+}
+
+@keyframes glitch-2 {
+  0% { clip-path: inset(25% 0 58% 0); }
+  20% { clip-path: inset(54% 0 7% 0); }
+  40% { clip-path: inset(58% 0 43% 0); }
+  60% { clip-path: inset(40% 0 61% 0); }
+  80% { clip-path: inset(92% 0 1% 0); }
+  100% { clip-path: inset(43% 0 1% 0); }
+}
+
+/* Deletion Animation */
+.delete-slide {
+  animation: delete-slide 0.3s ease-in-out forwards;
+}
+
+@keyframes delete-slide {
+  0% { 
+    transform: translateX(0) scale(1); 
+    opacity: 1; 
   }
+  50% { 
+    transform: translateX(20px) scale(0.95); 
+    opacity: 0.5; 
+  }
+  100% { 
+    transform: translateX(100%) scale(0.8); 
+    opacity: 0; 
+  }
+}
+
+/* Terminal Cursor */
+.terminal-cursor::after {
+  content: '▮';
+  animation: cursor-blink 1s infinite;
+  color: hsl(var(--neon-primary));
+}
+
+@keyframes cursor-blink {
+  0%, 50% { opacity: 1; }
+  51%, 100% { opacity: 0; }
 }
 
 @layer base {
