@@ -13,6 +13,7 @@ const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
       <div className="min-h-screen bg-background text-foreground crt-scanlines">
+        <div className="grid-background"></div>
         <TerminalHeader />
         <main>
           <Toaster />

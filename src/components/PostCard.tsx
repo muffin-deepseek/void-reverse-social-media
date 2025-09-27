@@ -1,5 +1,6 @@
 import { useState, useRef } from 'react';
 import { Trash2, Clock, Users } from 'lucide-react';
+import { soundEffects, type DeletionSoundType } from '@/utils/soundEffects';
 
 interface PostCardProps {
   id: string;
@@ -25,20 +26,42 @@ const PostCard = ({
 }: PostCardProps) => {
   const [isDeleting, setIsDeleting] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
+  const [isHovered, setIsHovered] = useState(false);
   const cardRef = useRef<HTMLDivElement>(null);
   const startX = useRef<number>(0);
 
+  // Random deletion animation type based on post ID for variety
+  const getDeletionType = (): DeletionSoundType => {
+    const types: DeletionSoundType[] = ['slide', 'explode', 'fade', 'glitch'];
+    const hash = id.split('').reduce((a, b) => {
+      a = ((a << 5) - a) + b.charCodeAt(0);
+      return a & a;
+    }, 0);
+    return types[Math.abs(hash) % types.length];
+  };
+
   const handleDelete = async () => {
+    if (isDeleting) return;
+    
     setIsDeleting(true);
+    const deletionType = getDeletionType();
+    
+    // Play sound effect
+    soundEffects.playDeleteSound(deletionType);
+    
     // Trigger deletion animation
     if (cardRef.current) {
-      cardRef.current.classList.add('delete-slide');
+      cardRef.current.classList.add(`delete-${deletionType}`);
     }
     
-    // Wait for animation to complete
+    // Wait for animation to complete based on type
+    const animationDuration = deletionType === 'glitch' ? 800 : 
+                            deletionType === 'fade' ? 600 :
+                            deletionType === 'explode' ? 500 : 400;
+    
     setTimeout(() => {
       onDelete(id);
-    }, 300);
+    }, animationDuration);
   };
 
   const handleTouchStart = (e: React.TouchEvent) => {
@@ -62,6 +85,20 @@ const PostCard = ({
     setIsDragging(false);
   };
 
+  const handleMouseEnter = () => {
+    setIsHovered(true);
+    soundEffects.playHoverSound();
+  };
+
+  const handleMouseLeave = () => {
+    setIsHovered(false);
+  };
+
+  const handleDeleteClick = () => {
+    soundEffects.playClickSound();
+    handleDelete();
+  };
+
   const formatSurvivalTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
@@ -71,12 +108,14 @@ const PostCard = ({
   return (
     <div
       ref={cardRef}
-      className={`bg-card border border-terminal-border p-4 mb-4 transition-all duration-200 hover:border-neon-dim ${
-        isDeleting ? 'delete-slide' : 'animate-fade-in-up'
-      }`}
+      className={`bg-card border border-terminal-border p-4 mb-4 post-hover ${
+        isDeleting ? '' : 'animate-fade-in-up'
+      } ${isHovered ? 'pulse-neon' : ''}`}
       onTouchStart={handleTouchStart}
       onTouchMove={handleTouchMove}
       onTouchEnd={handleTouchEnd}
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
     >
       {/* Header */}
       <div className="flex justify-between items-start mb-3">
@@ -89,8 +128,8 @@ const PostCard = ({
           </span>
         </div>
         <button
-          onClick={handleDelete}
-          className="group p-2 hover:bg-destructive/20 border border-destructive/50 transition-all duration-200 hover:border-destructive"
+          onClick={handleDeleteClick}
+          className="button-hover group p-2 hover:bg-destructive/20 border border-destructive/50 transition-all duration-200 hover:border-destructive"
         >
           <Trash2 className="w-4 h-4 text-destructive group-hover:animate-pulse" />
         </button>

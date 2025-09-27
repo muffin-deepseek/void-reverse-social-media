@@ -1,6 +1,7 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import PostCard from './PostCard';
 import { RefreshCw, Database, Trash2 } from 'lucide-react';
+import { soundEffects } from '@/utils/soundEffects';
 import meme1 from '@/assets/meme-1.png';
 import quote1 from '@/assets/quote-1.png';
 import pixelCat from '@/assets/pixel-cat.png';
@@ -22,7 +23,7 @@ const FeedContainer = () => {
   const [totalDeleted, setTotalDeleted] = useState(0);
 
   // Sample data for the demo
-  const samplePosts: Omit<Post, 'id' | 'timestamp' | 'survivedTime' | 'deletedBy'>[] = [
+  const samplePosts: Omit<Post, 'id' | 'timestamp' | 'survivedTime' | 'deletedBy'>[] = useMemo(() => [
     {
       type: 'meme',
       content: 'When you realize you\'ve been scrolling for 3 hours straight',
@@ -54,7 +55,7 @@ const FeedContainer = () => {
       content: 'Terminal aesthetic vibes',
       imageUrl: quote1,
     },
-  ];
+  ], []);
 
   // Initialize posts with realistic survival times
   useEffect(() => {
@@ -73,7 +74,7 @@ const FeedContainer = () => {
 
     // Simulate loading delay
     setTimeout(initializePosts, 1000);
-  }, []);
+  }, [samplePosts]);
 
   // Update survival times every second
   useEffect(() => {
@@ -95,6 +96,7 @@ const FeedContainer = () => {
   };
 
   const addRandomPost = () => {
+    soundEffects.playSuccessSound();
     const randomPost = samplePosts[Math.floor(Math.random() * samplePosts.length)];
     const newPost: Post = {
       ...randomPost,
@@ -132,7 +134,7 @@ const FeedContainer = () => {
           </h2>
           <button 
             onClick={addRandomPost}
-            className="flex items-center space-x-1 text-xs text-neon-dim hover:text-neon-primary transition-colors"
+            className="button-hover flex items-center space-x-1 text-xs text-neon-dim hover:text-neon-primary transition-colors"
           >
             <RefreshCw className="w-3 h-3" />
             <span>REFRESH</span>
@@ -172,7 +174,7 @@ const FeedContainer = () => {
             </div>
             <button 
               onClick={addRandomPost}
-              className="bg-primary text-primary-foreground px-4 py-2 border border-neon-primary hover:bg-neon-dim/20 transition-all"
+              className="button-hover bg-primary text-primary-foreground px-4 py-2 border border-neon-primary hover:bg-neon-dim/20 transition-all"
             >
               GENERATE_NEW_POSTS
             </button>
