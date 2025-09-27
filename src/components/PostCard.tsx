@@ -71,7 +71,7 @@ const PostCard = ({
   return (
     <div
       ref={cardRef}
-      className={`bg-card border border-terminal-border p-4 mb-4 transition-all duration-200 hover:border-neon-dim ${
+      className={`bg-card border border-terminal-border p-4 mb-4 post-hover ${
         isDeleting ? 'delete-slide' : 'animate-fade-in-up'
       }`}
       onTouchStart={handleTouchStart}
@@ -90,7 +90,7 @@ const PostCard = ({
         </div>
         <button
           onClick={handleDelete}
-          className="group p-2 hover:bg-destructive/20 border border-destructive/50 transition-all duration-200 hover:border-destructive"
+          className="group p-2 hover:bg-destructive/20 border border-destructive/50 button-glow transition-all duration-200 hover:border-destructive"
         >
           <Trash2 className="w-4 h-4 text-destructive group-hover:animate-pulse" />
         </button>

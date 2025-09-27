@@ -1,113 +1,158 @@
 import { useState, useEffect } from 'react';
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/hooks/useAuth';
 import PostCard from './PostCard';
-import { RefreshCw, Database, Trash2 } from 'lucide-react';
-import meme1 from '@/assets/meme-1.png';
-import quote1 from '@/assets/quote-1.png';
-import pixelCat from '@/assets/pixel-cat.png';
+import { Loader, AlertTriangle, RefreshCw, Database, Trash2 } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
 
 interface Post {
   id: string;
-  type: 'image' | 'quote' | 'meme';
   content: string;
-  imageUrl?: string;
+  type: 'image' | 'quote' | 'meme';
+  image_url?: string;
   author?: string;
-  timestamp: Date;
-  survivedTime: number;
-  deletedBy: number;
+  created_at: string;
+  survival_time_seconds: number;
+  is_deleted: boolean;
 }
 
 const FeedContainer = () => {
   const [posts, setPosts] = useState<Post[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [loading, setLoading] = useState(true);
+  const [deleting, setDeleting] = useState<Set<string>>(new Set());
   const [totalDeleted, setTotalDeleted] = useState(0);
+  const { user } = useAuth();
+  const { toast } = useToast();
 
-  // Sample data for the demo
-  const samplePosts: Omit<Post, 'id' | 'timestamp' | 'survivedTime' | 'deletedBy'>[] = [
-    {
-      type: 'meme',
-      content: 'When you realize you\'ve been scrolling for 3 hours straight',
-      imageUrl: meme1,
-    },
-    {
-      type: 'quote',
-      content: 'The best way to predict the future is to create it.',
-    },
-    {
-      type: 'image',
-      content: 'Cyberpunk cat vibes',
-      imageUrl: pixelCat,
-    },
-    {
-      type: 'quote',
-      content: 'In a world of ones and zeros, be the glitch.',
-    },
-    {
-      type: 'meme',
-      content: 'ERROR 404: Motivation not found. Please restart human.exe',
-    },
-    {
-      type: 'quote',
-      content: 'Code is poetry written in logic.',
-    },
-    {
-      type: 'image',
-      content: 'Terminal aesthetic vibes',
-      imageUrl: quote1,
-    },
-  ];
-
-  // Initialize posts with realistic survival times
-  useEffect(() => {
-    const initializePosts = () => {
-      const initialPosts: Post[] = samplePosts.map((post, index) => ({
-        ...post,
-        id: `post_${Date.now()}_${index}`,
-        timestamp: new Date(Date.now() - Math.random() * 3600000), // Random time up to 1 hour ago
-        survivedTime: Math.floor(Math.random() * 300) + 30, // 30-330 seconds
-        deletedBy: Math.floor(Math.random() * 50) + 5, // 5-55 deletions
-      }));
-
-      setPosts(initialPosts);
-      setIsLoading(false);
-    };
-
-    // Simulate loading delay
-    setTimeout(initializePosts, 1000);
-  }, []);
-
-  // Update survival times every second
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setPosts(currentPosts => 
-        currentPosts.map(post => ({
-          ...post,
-          survivedTime: post.survivedTime + 1,
-        }))
-      );
-    }, 1000);
-
-    return () => clearInterval(interval);
-  }, []);
-
-  const handleDeletePost = (postId: string) => {
-    setPosts(currentPosts => currentPosts.filter(post => post.id !== postId));
-    setTotalDeleted(prev => prev + 1);
+  // Sound effects
+  const playDeleteSound = () => {
+    const audio = new Audio('data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+DyvmIXBDWH0fPTgjMGKm7A7+OZRQ0PVqzn77BdGAg+ltryxHkpBSl+zPLZiTEHHGS57eGdTgwOUarm7bVmHgU2jdXzzn0vBSF1xe/eizEIGGq+6OOpVhMJR5/c7cB6JAU4iM/z1n4qBTB+ye7hmUYODlOq5O+zYBoGPJPY88p9KgUme8Xu3I4yBxpqvu7mnEoODU+q5e2yahoGOpHV8sp6KAUufsnw3Y8zCBpsvu/kolcTCUaZ2e/BdSMFMH/I8Nt9MQUbbc/u55xCDA5OpeTsrGIZBTaL0/PIeScELHfI8N+PNAUTY7zs5Z5MDg1No+XurWMaBDONz/PKeiYELXTL8N2TOAZ/jdHz0IEtBSV5xvLckzMGH2q39N+oVRIIRpfa7cB3JQUPX7jq4Z1FDE5GoeHsrGIZBDOLz+zIdSULFWS26+KNTE4PDc3t5qxqGAU1je/hm0cMEFWj4uyvWxYJMJbO8t+COgYWX7vs3o4+CMRtYvW7uWH5rBULKVPdzsWgLdYu4C3VfBMdl7ZLhvn6nIhIvzl3+I6tQUO5jbGg5Wbw2YfGJlEY6i85j6Y1oY4WGiUGrk+1oJ4RYlKA5KqiAHJAAC8LCwLU3qgFCATQyOzYpOWn+WLQYQY1QBbgTHZDR7wH2ZTXAQaACPGGsxJ5oX5iq9+gOgBQYADQOgO8IjYXY8Q2MKRcGFMDLPvr9K9uLdvN47Zv6Fzb');
+    audio.volume = 0.3;
+    audio.play().catch(() => {}); // Ignore if audio fails
   };
 
-  const addRandomPost = () => {
-    const randomPost = samplePosts[Math.floor(Math.random() * samplePosts.length)];
-    const newPost: Post = {
-      ...randomPost,
-      id: `post_${Date.now()}_${Math.random()}`,
-      timestamp: new Date(),
-      survivedTime: 0,
-      deletedBy: 0,
-    };
+  // Fetch posts from Supabase
+  const fetchPosts = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('posts')
+        .select('*')
+        .eq('is_deleted', false)
+        .order('created_at', { ascending: false });
 
-    setPosts(currentPosts => [newPost, ...currentPosts]);
+      if (error) throw error;
+      setPosts((data || []) as Post[]);
+    } catch (error) {
+      console.error('Error fetching posts:', error);
+      toast({
+        title: "ERROR_LOADING_FEED",
+        description: "Failed to load posts from the void.",
+        variant: "destructive"
+      });
+    } finally {
+      setLoading(false);
+    }
   };
 
-  if (isLoading) {
+  // Delete post function
+  const handleDeletePost = async (postId: string) => {
+    if (!user) {
+      toast({
+        title: "ACCESS_DENIED",
+        description: "Please login to delete posts.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    setDeleting(prev => new Set([...prev, postId]));
+    playDeleteSound();
+
+    try {
+      // Get user profile
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('user_id')
+        .eq('user_id', user.id)
+        .single();
+
+      if (!profile) {
+        throw new Error('Profile not found');
+      }
+
+      // Mark post as deleted and log the deletion
+      const { error: updateError } = await supabase
+        .from('posts')
+        .update({
+          is_deleted: true,
+          deleted_at: new Date().toISOString(),
+          deleted_by: profile.user_id
+        })
+        .eq('id', postId);
+
+      if (updateError) throw updateError;
+
+      // Log the deletion in deletions table
+      const { error: deletionError } = await supabase
+        .from('deletions')
+        .insert({
+          post_id: postId,
+          deleted_by: profile.user_id
+        });
+
+      if (deletionError) console.error('Error logging deletion:', deletionError);
+
+      // Remove from local state
+      setPosts(prev => prev.filter(post => post.id !== postId));
+      setTotalDeleted(prev => prev + 1);
+
+      toast({
+        title: "POST_TERMINATED",
+        description: "Successfully deleted from the void.",
+        className: "bg-terminal-surface border-neon-primary text-neon-primary"
+      });
+
+    } catch (error) {
+      console.error('Error deleting post:', error);
+      toast({
+        title: "DELETION_FAILED",
+        description: "Unable to delete post from the void.",
+        variant: "destructive"
+      });
+    } finally {
+      setDeleting(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(postId);
+        return newSet;
+      });
+    }
+  };
+
+  useEffect(() => {
+    fetchPosts();
+
+    // Set up real-time subscriptions
+    const channel = supabase
+      .channel('posts_changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'posts'
+        },
+        () => {
+          fetchPosts(); // Refresh posts on any change
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, []);
+
+  if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center space-y-4">
@@ -115,8 +160,24 @@ const FeedContainer = () => {
             LOADING_FEED...
           </div>
           <div className="flex justify-center">
-            <RefreshCw className="w-8 h-8 text-neon-dim animate-spin" />
+            <Loader className="w-8 h-8 text-neon-dim animate-spin" />
           </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (!user) {
+    return (
+      <div className="container mx-auto px-4 py-12 max-w-2xl">
+        <div className="text-center">
+          <AlertTriangle className="w-12 h-12 text-neon-dim mx-auto mb-6" />
+          <h2 className="text-neon-primary font-orbitron text-xl mb-4">
+            ACCESS_REQUIRED
+          </h2>
+          <p className="text-text-muted font-mono text-sm mb-6">
+            Please login to access the deletion feed and join the void.
+          </p>
         </div>
       </div>
     );
@@ -125,14 +186,14 @@ const FeedContainer = () => {
   return (
     <div className="container mx-auto px-4 py-6 max-w-2xl">
       {/* Stats Header */}
-      <div className="mb-6 p-4 bg-terminal-surface border border-neon-dim/30">
+      <div className="mb-6 p-4 bg-terminal-surface border border-neon-dim/30 post-hover">
         <div className="flex justify-between items-center mb-2">
           <h2 className="text-neon-primary font-orbitron text-lg neon-glow">
             DELETION_FEED
           </h2>
           <button 
-            onClick={addRandomPost}
-            className="flex items-center space-x-1 text-xs text-neon-dim hover:text-neon-primary transition-colors"
+            onClick={fetchPosts}
+            className="flex items-center space-x-1 text-xs text-neon-dim hover:text-neon-primary transition-colors button-glow"
           >
             <RefreshCw className="w-3 h-3" />
             <span>REFRESH</span>
@@ -171,17 +232,24 @@ const FeedContainer = () => {
               All posts have been deleted. The void is complete.
             </div>
             <button 
-              onClick={addRandomPost}
-              className="bg-primary text-primary-foreground px-4 py-2 border border-neon-primary hover:bg-neon-dim/20 transition-all"
+              onClick={fetchPosts}
+              className="bg-primary text-primary-foreground px-4 py-2 border border-neon-primary hover:bg-neon-dim/20 transition-all button-glow"
             >
-              GENERATE_NEW_POSTS
+              REFRESH_FEED
             </button>
           </div>
         ) : (
           posts.map(post => (
             <PostCard
               key={post.id}
-              {...post}
+              id={post.id}
+              type={post.type}
+              content={post.content}
+              imageUrl={post.image_url}
+              author={post.author}
+              timestamp={new Date(post.created_at)}
+              survivedTime={post.survival_time_seconds}
+              deletedBy={0} // This would need to be calculated from deletions table
               onDelete={handleDeletePost}
             />
           ))
@@ -191,7 +259,7 @@ const FeedContainer = () => {
       {/* Terminal Footer */}
       <div className="mt-8 text-center text-xs text-text-muted font-mono">
         <div className="border-t border-terminal-border pt-4">
-          VOID://DELETION_TERMINAL v1.0.0 | {posts.length} POSTS_REMAINING
+          VOID://DELETION_TERMINAL v2.1.337 | {posts.length} POSTS_REMAINING
         </div>
       </div>
     </div>
